@@ -47,18 +47,24 @@ def check_ssl(domain: str) -> dict:
 
         if data.get('status') == 'ok':
             cert = data['data']
+            # Extract issuer CN (Common Name)
+            issuer = cert.get('issuer', {})
+            issuer_cn = issuer.get('CN', 'Unknown') if isinstance(issuer, dict) else str(issuer)
+
+            # Extract subject CN
+            subject = cert.get('subject', {})
+            subject_cn = subject.get('CN', domain) if isinstance(subject, dict) else str(subject)
+
             return {
                 'success': True,
-                'domain': domain,
-                'valid': cert.get('valid', False),
-                'issuer': cert.get('issuer', 'Unknown'),
-                'subject': cert.get('subject', domain),
-                'validFrom': cert.get('validFrom'),
-                'validTo': cert.get('validTo'),
-                'daysRemaining': cert.get('daysRemaining'),
+                'domain': cert.get('domain', domain),
+                'issuer': issuer_cn,
+                'subject': subject_cn,
+                'validFrom': cert.get('valid_from'),
+                'validTo': cert.get('valid_to'),
                 'serialNumber': cert.get('serialNumber'),
-                'protocol': cert.get('protocol'),
-                'cipher': cert.get('cipher')
+                'bits': cert.get('bits'),
+                'ca': cert.get('ca', False)
             }
         else:
             return {'error': data.get('error', 'SSL check failed')}
@@ -69,16 +75,9 @@ def check_ssl(domain: str) -> dict:
         return {'error': f'Invalid response: {str(e)}'}
 
 
-def get_status_icon(valid: bool, days_remaining: int) -> str:
-    """Get status icon based on certificate validity."""
-    if not valid:
-        return '❌'
-    if days_remaining is not None:
-        if days_remaining <= 7:
-            return '🚨'
-        if days_remaining <= 30:
-            return '⚠️'
-    return '✅'
+def get_status_icon(has_cert: bool) -> str:
+    """Get status icon based on certificate presence."""
+    return '✅' if has_cert else '❌'
 
 
 def print_result(result: dict):
@@ -89,24 +88,13 @@ def print_result(result: dict):
         print(f"{'='*50}\n")
         return
 
-    days = result.get('daysRemaining')
-    icon = get_status_icon(result['valid'], days)
+    icon = get_status_icon(result.get('success', False))
 
     print(f"\n{'='*50}")
     print(f"  SSL Certificate Check: {result['domain']}")
     print(f"{'='*50}")
 
-    print(f"\n  {icon} Status: {'Valid' if result['valid'] else 'Invalid'}")
-
-    if days is not None:
-        if days <= 0:
-            print(f"  ⏰ Certificate: EXPIRED")
-        elif days <= 7:
-            print(f"  ⏰ Expires in: {days} days (CRITICAL)")
-        elif days <= 30:
-            print(f"  ⏰ Expires in: {days} days (WARNING)")
-        else:
-            print(f"  ⏰ Expires in: {days} days")
+    print(f"\n  {icon} Certificate Found")
 
     print(f"\n  📋 Certificate Details:")
     print(f"  {'-'*46}")
@@ -118,10 +106,8 @@ def print_result(result: dict):
     if result.get('validTo'):
         print(f"  Valid To:     {result['validTo']}")
 
-    if result.get('protocol'):
-        print(f"  Protocol:     {result['protocol']}")
-    if result.get('cipher'):
-        print(f"  Cipher:       {result['cipher']}")
+    if result.get('bits'):
+        print(f"  Key Size:     {result['bits']} bits")
     if result.get('serialNumber'):
         serial = result['serialNumber']
         if len(serial) > 40:
