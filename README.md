@@ -20,10 +20,10 @@ This tutorial requires an APIVerve API key. **[Sign up free](https://dashboard.a
 ## Features
 
 - Check SSL certificates for any domain
-- View certificate expiry with countdown
 - See issuer and subject details
-- Visual status indicators (valid/warning/expired)
-- Protocol and cipher information
+- View validity dates
+- Certificate key size
+- Serial number information
 - Interactive mode or command-line arguments
 
 ## Quick Start
@@ -62,36 +62,23 @@ This tutorial requires an APIVerve API key. **[Sign up free](https://dashboard.a
 
 ### Check a domain
 ```bash
-$ python checker.py github.com
+$ python checker.py ebay.com
 
 ==================================================
-  SSL Certificate Check: github.com
+  SSL Certificate Check: ebay.com
 ==================================================
 
-  ✅ Status: Valid
-  ⏰ Expires in: 245 days
+  ✅ Certificate Found
 
   📋 Certificate Details:
   ----------------------------------------------
-  Subject:      github.com
-  Issuer:       DigiCert Inc
-  Valid From:   2024-03-15T00:00:00Z
-  Valid To:     2025-03-14T23:59:59Z
-  Protocol:     TLSv1.3
-  Cipher:       TLS_AES_128_GCM_SHA256
+  Subject:      ebay.com
+  Issuer:       Sectigo Public Server Authentication CA OV R36
+  Valid From:   Jul 28 00:00:00 2025 GMT
+  Valid To:     Jul 28 23:59:59 2026 GMT
+  Key Size:     2048 bits
+  Serial:       99F408949A6416EDC3B8F5EC77B2EBE5
 ==================================================
-```
-
-### Certificate expiring soon
-```
-  ⚠️ Status: Valid
-  ⏰ Expires in: 12 days (WARNING)
-```
-
-### Expired certificate
-```
-  ❌ Status: Invalid
-  ⏰ Certificate: EXPIRED
 ```
 
 ## Project Structure
@@ -141,15 +128,22 @@ response = requests.get(
   "status": "ok",
   "error": null,
   "data": {
-    "valid": true,
-    "issuer": "DigiCert Inc",
-    "subject": "github.com",
-    "validFrom": "2024-03-15T00:00:00Z",
-    "validTo": "2025-03-14T23:59:59Z",
-    "daysRemaining": 245,
-    "protocol": "TLSv1.3",
-    "cipher": "TLS_AES_128_GCM_SHA256",
-    "serialNumber": "0A1B2C3D..."
+    "subject": {
+      "C": "US",
+      "ST": "California",
+      "O": "eBay, Inc.",
+      "CN": "ebay.com"
+    },
+    "issuer": {
+      "C": "GB",
+      "O": "Sectigo Limited",
+      "CN": "Sectigo Public Server Authentication CA OV R36"
+    },
+    "valid_from": "Jul 28 00:00:00 2025 GMT",
+    "valid_to": "Jul 28 23:59:59 2026 GMT",
+    "serialNumber": "99F408949A6416EDC3B8F5EC77B2EBE5",
+    "bits": 2048,
+    "domain": "ebay.com"
   }
 }
 ```
